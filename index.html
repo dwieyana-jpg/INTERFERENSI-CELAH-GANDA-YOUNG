@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulasi Interferensi Celah Ganda Young (PhET Advanced)</title>
+    <title>Simulasi Interferensi Celah Ganda Young (PhET Advanced + Decay)</title>
     <style>
         :root {
             --bg-color: #1a1a1a;
             --panel-color: #2d2d2d;
             --text-color: #ffffff;
             --accent-color: #00adb5;
-            --btn-active: #00fff2;
         }
 
         body {
@@ -167,12 +166,10 @@
 <body>
 
     <h1>Simulasi Laboratorium Interferensi Celah Ganda Young</h1>
-    <p class="subtitle">Eksperimen Fisika Kuantum & Gelombang Optik </p>
+    <p class="subtitle">Eksperimen Fisika Kuantum & Gelombang Optik (PhET Style - Mobile Friendly)</p>
 
     <div class="main-container">
-        <!-- Area Visualisasi & Kontrol Putar (Kiri) -->
         <div class="canvas-container">
-            <!-- Menu Playback Mode Baru -->
             <div class="playback-controls">
                 <button id="btnPausePlay" class="btn active">⏸ Pause</button>
                 <div style="border-left: 1px solid #444; margin: 0 5px;"></div>
@@ -183,39 +180,34 @@
             <canvas id="simCanvas" width="700" height="450"></canvas>
         </div>
 
-        <!-- Panel Kontrol Parameter (Kanan) -->
         <div class="control-panel">
             <h3>Kontrol Eksperimen</h3>
             <hr style="border: 0; border-top: 1px solid #444; margin-top: -10px;">
 
-            <!-- Slider Panjang Gelombang -->
             <div class="control-group">
                 <label>Panjang Gelombang (<span id="lambda-val">550</span> nm)</label>
                 <input type="range" id="wavelength" min="400" max="700" value="550">
             </div>
 
-            <!-- Slider Jarak Antar Celah -->
             <div class="control-group">
                 <label>Jarak Celah, d (<span id="d-val">25</span> &mu;m)</label>
                 <input type="range" id="slitDistance" min="10" max="50" value="25">
             </div>
 
-            <!-- Slider Jarak ke Layar -->
             <div class="control-group">
-                <label>Jarak Layar, l (<span id="L-val">2.0</span> m)</label>
+                <label>Jarak Layar, L (<span id="L-val">2.0</span> m)</label>
                 <input type="range" id="screenDistance" min="1.0" max="3.0" step="0.1" value="2.0">
             </div>
 
-            <!-- Tampilan Data Hasil Perhitungan -->
             <div class="data-display">
                 <div>Jarak Antar Terang (&Delta;y): <span id="dy-val">0.00</span> mm</div>
                 <div>Frekuensi: <span id="freq-val">0.00</span> THz</div>
             </div>
 
             <div class="legend">
-                <strong>Tips Pembelajaran:</strong><br>
-                • Gunakan <b>Slow Motion</b> untuk melihat bagaimana riak gelombang dari celah atas dan celah bawah saling berinterferensi sebelum mencapai layar.<br>
-                • Tekan <b>Pause</b> untuk membekukan gelombang dan mengamati posisi puncak riak air secara statis.
+                <strong>Fisika Nyata Berhasil Diterapkan:</strong><br>
+                • <b>Terang Pusat (Pusat Layar):</b> Memiliki puncak grafik tertinggi dan pola pita paling terang.<br>
+                • <b>Efek Peluruhan (Decay):</b> Semakin menjauh ke tepi atas/bawah, intensitas meluruh secara eksponensial (meredup), merepresentasikan kondisi eksperimen riil di laboratorium asli.
             </div>
         </div>
     </div>
@@ -224,7 +216,7 @@
         const canvas = document.getElementById('simCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Elemen Slider & UI Data
+        // Elemen UI
         const wlInput = document.getElementById('wavelength');
         const dInput = document.getElementById('slitDistance');
         const LInput = document.getElementById('screenDistance');
@@ -234,40 +226,36 @@
         const dyVal = document.getElementById('dy-val');
         const freqVal = document.getElementById('freq-val');
 
-        // Elemen Tombol Kontrol Baru
         const btnPausePlay = document.getElementById('btnPausePlay');
         const btnNormal = document.getElementById('btnNormal');
         const btnSlow = document.getElementById('btnSlow');
 
-        // State Aplikasi
+        // State Animasi
         let time = 0;
         let isPaused = false;
-        let speedMultiplier = 0.2; // Nilai default untuk kecepatan Normal
+        let speedMultiplier = 0.2; 
 
-        // Event Listener Kontrol Kecepatan & Playback
+        // Listener Kontrol Animasi
         btnPausePlay.addEventListener('click', () => {
             isPaused = !isPaused;
             btnPausePlay.innerText = isPaused ? "▶ Play" : "⏸ Pause";
-            if (isPaused) {
-                btnPausePlay.classList.remove('active');
-            } else {
-                btnPausePlay.classList.add('active');
-            }
+            if (isPaused) btnPausePlay.classList.remove('active');
+            else btnPausePlay.classList.add('active');
         });
 
         btnNormal.addEventListener('click', () => {
-            speedMultiplier = 0.2; // Kecepatan normal
+            speedMultiplier = 0.2;
             btnNormal.classList.add('active');
             btnSlow.classList.remove('active');
         });
 
         btnSlow.addEventListener('click', () => {
-            speedMultiplier = 0.04; // Kecepatan lambat (5x lebih lambat dari normal)
+            speedMultiplier = 0.04; // 5x lebih lambat
             btnSlow.classList.add('active');
             btnNormal.classList.remove('active');
         });
 
-        // Fungsi konversi spektrum warna nanometer ke RGB
+        // Konversi spektrum nm ke warna RGB serealistis mungkin
         function wavelengthToRGB(wavelength) {
             let r, g, b, alpha;
             if (wavelength >= 380 && wavelength < 440) {
@@ -310,6 +298,7 @@
             dVal.innerText = d;
             LVal.innerText = L.toFixed(1);
 
+            // Perhitungan fisis murni matematika
             const dyReal = (lambda * 1e-9 * L) / (d * 1e-6); 
             dyVal.innerText = (dyReal * 1000).toFixed(3); 
             
@@ -324,7 +313,7 @@
             const centerY = canvas.height / 2;
             const slitDisplayOffset = d * 0.8; 
 
-            // 1. Gambar Komponen Fisik (Laser & Penghalang)
+            // 1. Gambar Komponen Fisik (Laser & Celah)
             ctx.fillStyle = colorObj.rgbaStr;
             ctx.fillRect(0, centerY - 20, slitX, 40);
             ctx.fillStyle = "#fff";
@@ -346,12 +335,12 @@
             ctx.fillStyle = "#00adb5";
             ctx.fillText("d", slitX - 25, centerY + 4);
 
-            // Kontrol Animasi Waktu (Hanya bertambah jika tidak di-Pause)
+            // Logika jalannya waktu perambatan
             if (!isPaused) {
                 time += speedMultiplier;
             }
 
-            // 2. Render Riak Gelombang Perambatan
+            // 2. Render Animasi Gelombang
             ctx.save();
             ctx.beginPath();
             ctx.rect(slitX + 12, 0, screenX - slitX - 12, canvas.height);
@@ -372,7 +361,7 @@
             }
             ctx.restore();
 
-            // 3. Render Grafik Intensitas & Pola Pita di Layar
+            // 3. Render Grafik Intensitas & Pola Pita (DENGAN AKURASI EFEK REDUP/DECAY)
             ctx.fillStyle = "#050505";
             ctx.fillRect(screenX, 0, canvas.width - screenX, canvas.height);
 
@@ -381,19 +370,24 @@
             for (let y = 0; y < canvas.height; y++) {
                 const yOffset = y - centerY;
                 const phase = yOffset * visualScaleFactor * 0.01;
-                const intensity = Math.pow(Math.cos(phase), 2); 
+                
+                // Rumus Gabungan: Interferensi Dasar * Efek Peluruhan Eksponensial (Gaussian Decay)
+                const interference = Math.pow(Math.cos(phase), 2); 
+                const decayFactor = Math.exp(-Math.pow(yOffset / 180, 2)); 
+                const intensity = interference * decayFactor;
 
-                // Grafik Intensitas Sinusoidal
+                // A. Gambar Batang Grafik Intensitas Sinusoidal Meluruh
                 const graphWidth = intensity * 100;
                 ctx.fillStyle = `rgba(${colorObj.r}, ${colorObj.g}, ${colorObj.b}, 0.4)`;
                 ctx.fillRect(screenX + 10, y, graphWidth, 1);
 
+                // Garis tepi putih pelapis grafik agar kurvanya terlihat tegas
                 if (y > 0) {
-                    ctx.fillStyle = `rgba(255, 255, 255, 0.3)`;
-                    ctx.fillRect(screenX + 10 + graphWidth, y, 1.5, 1);
+                    ctx.fillStyle = `rgba(255, 255, 255, 0.25)`;
+                    ctx.fillRect(screenX + 10 + graphWidth, y, 1.2, 1);
                 }
 
-                // Pola Pita Cahaya
+                // B. Gambar Pola Pita di Layar yang Meremang ke Tepi
                 ctx.fillStyle = `rgba(${colorObj.r}, ${colorObj.g}, ${colorObj.b}, ${intensity})`;
                 ctx.fillRect(canvas.width - 100, y, 100, 1);
             }
@@ -428,12 +422,12 @@
             requestAnimationFrame(drawSimulation);
         }
 
-        // Event Listener Input Slider (Tetap merespon instan meski dalam kondisi Pause)
+        // Event Listener Perubahan Slider
         wlInput.addEventListener('input', drawSimulation);
         dInput.addEventListener('input', drawSimulation);
         LInput.addEventListener('input', drawSimulation);
 
-        // Eksekusi render utama
+        // Render perdana
         drawSimulation();
     </script>
 </body>
