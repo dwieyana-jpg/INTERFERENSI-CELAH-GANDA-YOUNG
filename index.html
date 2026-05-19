@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Interferensi Celah Ganda Young (PhET Advanced)</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --panel-color: #2d2d2d;
+            --text-color: #ffffff;
+            --accent-color: #00adb5;
+            --btn-active: #00fff2;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            margin-bottom: 5px;
+            font-size: 24px;
+            color: var(--accent-color);
+        }
+
+        p.subtitle {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #888;
+            font-size: 14px;
+        }
+
+        .main-container {
+            display: flex;
+            gap: 20px;
+            max-width: 1200px;
+            width: 100%;
+            background: var(--panel-color);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+
+        .canvas-container {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .playback-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            background: #222;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .btn {
+            background: #444;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #555;
+        }
+
+        .btn.active {
+            background: var(--accent-color);
+            color: #000;
+            box-shadow: 0 0 10px var(--accent-color);
+        }
+
+        canvas {
+            background: #000;
+            border-radius: 8px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+            width: 100%;
+            height: auto;
+        }
+
+        .control-panel {
+            flex: 1;
+            background: #222;
+            padding: 20px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            min-width: 280px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        label span {
+            color: var(--accent-color);
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #444;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .data-display {
+            background: #111;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid var(--accent-color);
+            font-family: monospace;
+            font-size: 13px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .legend {
+            font-size: 12px;
+            color: #aaa;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Simulasi Laboratorium Interferensi Celah Ganda Young</h1>
+    <p class="subtitle">Eksperimen Fisika Kuantum & Gelombang Optik (PhET Style)</p>
+
+    <div class="main-container">
+        <!-- Area Visualisasi & Kontrol Putar (Kiri) -->
+        <div class="canvas-container">
+            <!-- Menu Playback Mode Baru -->
+            <div class="playback-controls">
+                <button id="btnPausePlay" class="btn active">⏸ Pause</button>
+                <div style="border-left: 1px solid #444; margin: 0 5px;"></div>
+                <button id="btnNormal" class="btn active">Normal Speed</button>
+                <button id="btnSlow" class="btn">Slow Motion</button>
+            </div>
+            
+            <canvas id="simCanvas" width="700" height="450"></canvas>
+        </div>
+
+        <!-- Panel Kontrol Parameter (Kanan) -->
+        <div class="control-panel">
+            <h3>Kontrol Eksperimen</h3>
+            <hr style="border: 0; border-top: 1px solid #444; margin-top: -10px;">
+
+            <!-- Slider Panjang Gelombang -->
+            <div class="control-group">
+                <label>Panjang Gelombang (<span id="lambda-val">550</span> nm)</label>
+                <input type="range" id="wavelength" min="400" max="700" value="550">
+            </div>
+
+            <!-- Slider Jarak Antar Celah -->
+            <div class="control-group">
+                <label>Jarak Celah, $d$ (<span id="d-val">25</span> &mu;m)</label>
+                <input type="range" id="slitDistance" min="10" max="50" value="25">
+            </div>
+
+            <!-- Slider Jarak ke Layar -->
+            <div class="control-group">
+                <label>Jarak Layar, $L$ (<span id="L-val">2.0</span> m)</label>
+                <input type="range" id="screenDistance" min="1.0" max="3.0" step="0.1" value="2.0">
+            </div>
+
+            <!-- Tampilan Data Hasil Perhitungan -->
+            <div class="data-display">
+                <div>Jarak Antar Terang (&Delta;y): <span id="dy-val">0.00</span> mm</div>
+                <div>Frekuensi: <span id="freq-val">0.00</span> THz</div>
+            </div>
+
+            <div class="legend">
+                <strong>Tips Pembelajaran:</strong><br>
+                • Gunakan <b>Slow Motion</b> untuk melihat bagaimana riak gelombang dari celah atas dan celah bawah saling berinterferensi sebelum mencapai layar.<br>
+                • Tekan <b>Pause</b> untuk membekukan gelombang dan mengamati posisi puncak riak air secara statis.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Elemen Slider & UI Data
+        const wlInput = document.getElementById('wavelength');
+        const dInput = document.getElementById('slitDistance');
+        const LInput = document.getElementById('screenDistance');
+        const lambdaVal = document.getElementById('lambda-val');
+        const dVal = document.getElementById('d-val');
+        const LVal = document.getElementById('L-val');
+        const dyVal = document.getElementById('dy-val');
+        const freqVal = document.getElementById('freq-val');
+
+        // Elemen Tombol Kontrol Baru
+        const btnPausePlay = document.getElementById('btnPausePlay');
+        const btnNormal = document.getElementById('btnNormal');
+        const btnSlow = document.getElementById('btnSlow');
+
+        // State Aplikasi
+        let time = 0;
+        let isPaused = false;
+        let speedMultiplier = 0.2; // Nilai default untuk kecepatan Normal
+
+        // Event Listener Kontrol Kecepatan & Playback
+        btnPausePlay.addEventListener('click', () => {
+            isPaused = !isPaused;
+            btnPausePlay.innerText = isPaused ? "▶ Play" : "⏸ Pause";
+            if (isPaused) {
+                btnPausePlay.classList.remove('active');
+            } else {
+                btnPausePlay.classList.add('active');
+            }
+        });
+
+        btnNormal.addEventListener('click', () => {
+            speedMultiplier = 0.2; // Kecepatan normal
+            btnNormal.classList.add('active');
+            btnSlow.classList.remove('active');
+        });
+
+        btnSlow.addEventListener('click', () => {
+            speedMultiplier = 0.04; // Kecepatan lambat (5x lebih lambat dari normal)
+            btnSlow.classList.add('active');
+            btnNormal.classList.remove('active');
+        });
+
+        // Fungsi konversi spektrum warna nanometer ke RGB
+        function wavelengthToRGB(wavelength) {
+            let r, g, b, alpha;
+            if (wavelength >= 380 && wavelength < 440) {
+                r = -((wavelength - 440) / (440 - 380)); g = 0.0; b = 1.0;
+            } else if (wavelength >= 440 && wavelength < 490) {
+                r = 0.0; g = (wavelength - 440) / (490 - 440); b = 1.0;
+            } else if (wavelength >= 490 && wavelength < 510) {
+                r = 0.0; g = 1.0; b = -((wavelength - 510) / (510 - 490));
+            } else if (wavelength >= 510 && wavelength < 580) {
+                r = (wavelength - 510) / (580 - 510); g = 1.0; b = 0.0;
+            } else if (wavelength >= 580 && wavelength < 645) {
+                r = 1.0; g = -((wavelength - 645) / (645 - 580)); b = 0.0;
+            } else if (wavelength >= 645 && wavelength <= 780) {
+                r = 1.0; g = 0.0; b = 0.0;
+            } else {
+                r = 0.0; g = 0.0; b = 0.0;
+            }
+
+            if (wavelength >= 380 && wavelength < 420) alpha = 0.3 + 0.7 * (wavelength - 380) / (420 - 380);
+            else if (wavelength >= 420 && wavelength <= 700) alpha = 1.0;
+            else if (wavelength >= 700 && wavelength <= 780) alpha = 0.3 + 0.7 * (780 - wavelength) / (780 - 700);
+            else alpha = 0;
+
+            return {
+                r: Math.round(r * 255),
+                g: Math.round(g * 255),
+                b: Math.round(b * 255),
+                rgbaStr: `rgba(${Math.round(r*255)}, ${Math.round(g*255)}, ${Math.round(b*255)}, ${alpha})`
+            };
+        }
+
+        function drawSimulation() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const lambda = parseFloat(wlInput.value); 
+            const d = parseFloat(dInput.value); 
+            const L = parseFloat(LInput.value); 
+
+            lambdaVal.innerText = lambda;
+            dVal.innerText = d;
+            LVal.innerText = L.toFixed(1);
+
+            const dyReal = (lambda * 1e-9 * L) / (d * 1e-6); 
+            dyVal.innerText = (dyReal * 1000).toFixed(3); 
+            
+            const c = 3e8;
+            const freq = c / (lambda * 1e-9);
+            freqVal.innerText = (freq / 1e12).toFixed(1);
+
+            const colorObj = wavelengthToRGB(lambda);
+
+            const slitX = 140;
+            const screenX = 460;
+            const centerY = canvas.height / 2;
+            const slitDisplayOffset = d * 0.8; 
+
+            // 1. Gambar Komponen Fisik (Laser & Penghalang)
+            ctx.fillStyle = colorObj.rgbaStr;
+            ctx.fillRect(0, centerY - 20, slitX, 40);
+            ctx.fillStyle = "#fff";
+            ctx.font = "11px sans-serif";
+            ctx.fillText("SUMBER LASER", 20, centerY + 4);
+
+            ctx.fillStyle = "#444";
+            ctx.fillRect(slitX, 0, 12, canvas.height);
+
+            ctx.clearRect(slitX - 1, centerY - slitDisplayOffset - 4, 14, 8);
+            ctx.clearRect(slitX - 1, centerY + slitDisplayOffset - 4, 14, 8);
+
+            ctx.strokeStyle = "#00adb5";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(slitX - 15, centerY - slitDisplayOffset);
+            ctx.lineTo(slitX - 15, centerY + slitDisplayOffset);
+            ctx.stroke();
+            ctx.fillStyle = "#00adb5";
+            ctx.fillText("d", slitX - 25, centerY + 4);
+
+            // Kontrol Animasi Waktu (Hanya bertambah jika tidak di-Pause)
+            if (!isPaused) {
+                time += speedMultiplier;
+            }
+
+            // 2. Render Riak Gelombang Perambatan
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(slitX + 12, 0, screenX - slitX - 12, canvas.height);
+            ctx.clip();
+
+            for (let r = 5; r < 340; r += 16) {
+                let waveIntensity = (1 + Math.sin(r * 0.15 - time)) * 0.4;
+                ctx.strokeStyle = `rgba(${colorObj.r}, ${colorObj.g}, ${colorObj.b}, ${waveIntensity})`;
+                ctx.lineWidth = 2;
+                
+                ctx.beginPath();
+                ctx.arc(slitX + 12, centerY - slitDisplayOffset, r, -Math.PI/2.2, Math.PI/2.2);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.arc(slitX + 12, centerY + slitDisplayOffset, r, -Math.PI/2.2, Math.PI/2.2);
+                ctx.stroke();
+            }
+            ctx.restore();
+
+            // 3. Render Grafik Intensitas & Pola Pita di Layar
+            ctx.fillStyle = "#050505";
+            ctx.fillRect(screenX, 0, canvas.width - screenX, canvas.height);
+
+            const visualScaleFactor = (d / (lambda * L)) * 140; 
+
+            for (let y = 0; y < canvas.height; y++) {
+                const yOffset = y - centerY;
+                const phase = yOffset * visualScaleFactor * 0.01;
+                const intensity = Math.pow(Math.cos(phase), 2); 
+
+                // Grafik Intensitas Sinusoidal
+                const graphWidth = intensity * 100;
+                ctx.fillStyle = `rgba(${colorObj.r}, ${colorObj.g}, ${colorObj.b}, 0.4)`;
+                ctx.fillRect(screenX + 10, y, graphWidth, 1);
+
+                if (y > 0) {
+                    ctx.fillStyle = `rgba(255, 255, 255, 0.3)`;
+                    ctx.fillRect(screenX + 10 + graphWidth, y, 1.5, 1);
+                }
+
+                // Pola Pita Cahaya
+                ctx.fillStyle = `rgba(${colorObj.r}, ${colorObj.g}, ${colorObj.b}, ${intensity})`;
+                ctx.fillRect(canvas.width - 100, y, 100, 1);
+            }
+
+            // Garis pembatas layar tampak
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(screenX, 0);
+            ctx.lineTo(screenX, canvas.height);
+            ctx.stroke();
+
+            // Label Teks Layar
+            ctx.fillStyle = "#fff";
+            ctx.font = "bold 11px Arial";
+            ctx.fillText("GRAFIK INTENSITAS", screenX + 12, 20);
+            ctx.fillText("POLA PITA DI LAYAR", canvas.width - 110, 20);
+            
+            // Garis bantu penunjuk jarak L
+            ctx.strokeStyle = "#666";
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(slitX + 12, canvas.height - 25);
+            ctx.lineTo(screenX, canvas.height - 25);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = "#aaa";
+            ctx.font = "11px sans-serif";
+            ctx.fillText(`Jarak Layar (L) = ${L.toFixed(1)} m`, (slitX + screenX)/2 - 50, canvas.height - 12);
+
+            requestAnimationFrame(drawSimulation);
+        }
+
+        // Event Listener Input Slider (Tetap merespon instan meski dalam kondisi Pause)
+        wlInput.addEventListener('input', drawSimulation);
+        dInput.addEventListener('input', drawSimulation);
+        LInput.addEventListener('input', drawSimulation);
+
+        // Eksekusi render utama
+        drawSimulation();
+    </script>
+</body>
+</html>
